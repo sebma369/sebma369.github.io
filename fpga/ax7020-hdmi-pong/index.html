@@ -1,0 +1,1344 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Seb Ma">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="用 AX7020 的可编程逻辑实现 HDMI 挡板接球游戏，并理解组合与时序逻辑、TMDS 编码、时钟和 FPGA 布线。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AX7020 纯 FPGA 实验：HDMI 挡板接球游戏">
+<meta property="og:url" content="https://sebma369.github.io/fpga/ax7020-hdmi-pong/index.html">
+<meta property="og:site_name" content="SebMa&#39;s blog">
+<meta property="og:description" content="用 AX7020 的可编程逻辑实现 HDMI 挡板接球游戏，并理解组合与时序逻辑、TMDS 编码、时钟和 FPGA 布线。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://sebma369.github.io/downloads/fpga/ax7020-hdmi-pong/preview/states.png">
+<meta property="og:image" content="https://sebma369.github.io/downloads/fpga/ax7020-hdmi-pong/diagrams/pong-architecture.svg">
+<meta property="og:image" content="https://sebma369.github.io/downloads/fpga/ax7020-hdmi-pong/img/image.png">
+<meta property="og:image" content="https://sebma369.github.io/downloads/fpga/ax7020-hdmi-pong/img/io.png">
+<meta property="og:image" content="https://sebma369.github.io/downloads/fpga/ax7020-hdmi-pong/img/image-1.png">
+<meta property="og:image" content="https://sebma369.github.io/downloads/fpga/ax7020-hdmi-pong/img/image0.png">
+<meta property="og:image" content="https://sebma369.github.io/downloads/fpga/ax7020-hdmi-pong/img/IMG_2782.JPG">
+<meta property="article:published_time" content="2026-10-21T12:00:00.000Z">
+<meta property="article:modified_time" content="2026-10-21T12:45:12.929Z">
+<meta property="article:author" content="Seb Ma">
+<meta property="article:tag" content="FPGA">
+<meta property="article:tag" content="AX7020">
+<meta property="article:tag" content="Verilog">
+<meta property="article:tag" content="Vivado">
+<meta property="article:tag" content="HDMI">
+<meta property="article:tag" content="Pong">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sebma369.github.io/downloads/fpga/ax7020-hdmi-pong/preview/states.png">
+  
+  
+  
+  <title>AX7020 纯 FPGA 实验：HDMI 挡板接球游戏 - SebMa&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"sebma369.github.io","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>SebMa&#39;s blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="AX7020 纯 FPGA 实验：HDMI 挡板接球游戏"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-10-21 20:00" pubdate>
+          October 21, 2026 pm
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          8k words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          67 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">AX7020 纯 FPGA 实验：HDMI 挡板接球游戏</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>任务：只用 AX7020、HDMI 显示屏及连接线，制作一个能实际游玩的单人挡板接球游戏。屏幕显示球、挡板、分数和 3 次机会；用板载按键移动、开始、暂停，漏接 3 次进入 GAME OVER。</p>
+</blockquote>
+<h2 id="1-项目操作">1. 项目操作</h2>
+<h3 id="1-1-操作规则">1.1 操作规则</h3>
+<p><strong>PL KEY1～PL KEY4</strong></p>
+<table>
+<thead>
+<tr>
+<th>按键</th>
+<th>功能</th>
+<th>屏幕反应</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>KEY1</td>
+<td>整体复位，包括视频时钟模块</td>
+<td>屏幕可能短暂重新锁定，回到 READY，分数 00、机会 3</td>
+</tr>
+<tr>
+<td>KEY2，按住</td>
+<td>挡板左移</td>
+<td>每帧移动 7 像素，到边界停止</td>
+</tr>
+<tr>
+<td>KEY3，按住</td>
+<td>挡板右移</td>
+<td>每帧移动 7 像素，到边界停止</td>
+</tr>
+<tr>
+<td>KEY2＋KEY3 同时按住</td>
+<td>不移动</td>
+<td>两个方向互相抵消</td>
+</tr>
+<tr>
+<td>KEY4，在 READY</td>
+<td>发球</td>
+<td>进入 RUN，球开始运动</td>
+</tr>
+<tr>
+<td>KEY4，在 RUN / PAUSE</td>
+<td>暂停 / 继续</td>
+<td>位置保持 / 恢复运动</td>
+</tr>
+<tr>
+<td>KEY4，在 GAME OVER</td>
+<td>新一局</td>
+<td>回到 READY，再按一次才发球</td>
+</tr>
+</tbody>
+</table>
+<p>球碰左右边界、上边界反弹；向下穿过挡板顶面并与挡板重叠时反弹，得分加 1。得分到 99 后保持 99。漏接后机会减 1，若仍有机会就回到 READY，保留累计分数；机会归零进入 GAME OVER。</p>
+<p>没有“随机胜利”或隐藏输入：一次明确的验收任务是 <strong>接住球累计得 10 分，演示暂停和继续，随后演示三次漏接及重开</strong>。新手可先以接住 1 次为目标。</p>
+<h3 id="1-2-LED-辅助诊断">1.2 LED 辅助诊断</h3>
+<table>
+<thead>
+<tr>
+<th>指示灯</th>
+<th>点亮含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PL LED1</td>
+<td>视频 MMCM 已锁定</td>
+</tr>
+<tr>
+<td>PL LED2</td>
+<td>处于 PAUSE</td>
+</tr>
+<tr>
+<td>PL LED3</td>
+<td>最近接到球，约保持 10 帧，即 0.167 秒</td>
+</tr>
+<tr>
+<td>PL LED4</td>
+<td>GAME OVER</td>
+</tr>
+</tbody>
+</table>
+<p>LED 仍然低电平点亮。游戏内部使用正逻辑，最后在顶层取反输出，避免到处混用“0 表示亮”的含义。</p>
+<h3 id="1-3-画面参考">1.3 画面参考</h3>
+<p>下图由 <strong>实际 <code>video_render.v</code> 经 XSim 输出 RGB 后生成</strong>。四幅依次为 READY、RUN、PAUSE、GAME OVER<br>
+<img src="/downloads/fpga/ax7020-hdmi-pong/preview/states.png" srcset="/img/loading.gif" lazyload alt="RTL 渲染参考：左上 READY，右上 RUN，左下 PAUSE，右下 GAME OVER"></p>
+<h2 id="2-文件清单">2. 文件清单</h2>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>职责</th>
+<th>建议阅读顺序</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/downloads/fpga/ax7020-hdmi-pong/rtl/pong_game.v">rtl/pong_game.v</a></td>
+<td>游戏状态机、运动、碰撞、分数和机会</td>
+<td>1，先理解规则怎样成为寄存器和条件判断</td>
+</tr>
+<tr>
+<td><a href="/downloads/fpga/ax7020-hdmi-pong/rtl/key_filter.v">rtl/key_filter.v</a></td>
+<td>异步输入同步、10 ms 消抖、单次按下事件</td>
+<td>2</td>
+</tr>
+<tr>
+<td><a href="/downloads/fpga/ax7020-hdmi-pong/rtl/video_timing.v">rtl/video_timing.v</a></td>
+<td>逐行扫描计数、同步信号、每帧更新脉冲</td>
+<td>3</td>
+</tr>
+<tr>
+<td><a href="/downloads/fpga/ax7020-hdmi-pong/rtl/video_render.v">rtl/video_render.v</a></td>
+<td>根据坐标直接算颜色、字符点阵 ROM、彩条模式</td>
+<td>4</td>
+</tr>
+<tr>
+<td><a href="/downloads/fpga/ax7020-hdmi-pong/rtl/pong_top.v">rtl/pong_top.v</a></td>
+<td>模块连接和三路并行颜色通道</td>
+<td>5</td>
+</tr>
+<tr>
+<td><a href="/downloads/fpga/ax7020-hdmi-pong/rtl/reset_sync.v">rtl/reset_sync.v</a></td>
+<td>异步置位、同步释放复位</td>
+<td>配合按键模块</td>
+</tr>
+<tr>
+<td><a href="/downloads/fpga/ax7020-hdmi-pong/rtl/clock_gen.v">rtl/clock_gen.v</a></td>
+<td>MMCM 与时钟缓冲：25.2 MHz、126 MHz</td>
+<td>先使用，再理解</td>
+</tr>
+<tr>
+<td><a href="/downloads/fpga/ax7020-hdmi-pong/rtl/tmds_encoder.v">rtl/tmds_encoder.v</a></td>
+<td>RGB 8 位数据编码为 10 位视频符号</td>
+<td>先使用，再理解</td>
+</tr>
+<tr>
+<td><a href="/downloads/fpga/ax7020-hdmi-pong/rtl/tmds_serial.v">rtl/tmds_serial.v</a></td>
+<td>7 系列 OSERDESE2 主从串化</td>
+<td>先使用，再理解</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-架构">3. 架构</h2>
+<p><img src="/downloads/fpga/ax7020-hdmi-pong/diagrams/pong-architecture.svg" srcset="/img/loading.gif" lazyload alt="Pong 模块与信号流"></p>
+<table>
+<thead>
+<tr>
+<th>知识点</th>
+<th>本项目中的用途</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>并行模块与 <code>always</code></td>
+<td>扫描、按键、游戏、RGB 编码在各自电路中同时工作</td>
+<td>主状态机 PAUSE 时，像素时序和编码仍持续运行，否则屏幕会失去信号</td>
+</tr>
+<tr>
+<td>非阻塞赋值 <code>&lt;=</code></td>
+<td>保存坐标、状态、同步链与计数器</td>
+<td>同一时钟沿读取旧寄存器值，完成后统一更新，不是每写一行就立即改变后续读值</td>
+</tr>
+<tr>
+<td>组合逻辑 <code>always @*</code></td>
+<td>根据旧位置计算下一位置、根据像素坐标算颜色</td>
+<td>必须给默认值，避免意外推断锁存器</td>
+</tr>
+<tr>
+<td>位拼接与逐位运算</td>
+<td>复位移位链、TMDS XOR/XNOR、LED 输出取反</td>
+<td>运算直接对应并行位逻辑</td>
+</tr>
+<tr>
+<td><code>generate</code></td>
+<td>实例化 3 个消抖器、3 路数据串化器</td>
+<td>在综合展开时复制硬件，不是运行时循环调用一个共享函数</td>
+</tr>
+<tr>
+<td>参数</td>
+<td><code>TEST_PATTERN</code> 选择彩条/游戏，消抖周期可缩短仿真</td>
+<td>参数是展开和综合配置，改后要重新生成比特流</td>
+</tr>
+<tr>
+<td>字符 ROM 与坐标比较</td>
+<td>按每个像素的位置决定显示内容</td>
+<td>不需要 CPU 逐个执行画图指令，也不必保存整幅帧图</td>
+</tr>
+</tbody>
+</table>
+<h3 id="3-1-为什么按键不会漏、也不会长按反复暂停">3.1 为什么按键不会漏、也不会长按反复暂停</h3>
+<p>物理按键先经过两级寄存器同步，再要求电平连续稳定 252000 个像素时钟，即 10 ms，才改变稳定状态。KEY2/KEY3使用稳定电平用于连续移动；KEY4使用只有一个时钟周期的 <code>press</code> 脉冲。</p>
+<p>一帧有 420000 个像素时钟，KEY4 的脉冲未必刚好出现在帧更新点。因此 <code>action_pending</code> 寄存器把事件保存到下一帧再处理。按住 KEY4 不会每帧暂停、继续来回切换，必须先松开、再按一次。</p>
+<p>KEY1 是独立的整体复位：它先复位 MMCM，MMCM 的 LOCKED 失效后请求逻辑复位。锁定恢复后，<code>reset_sync</code> 再等待两个像素时钟沿释放复位。这样即使像素时钟暂时停止，失锁也能异步复位；同时避免把多个异步信号简单组合后接到整片逻辑的复位端。</p>
+<h3 id="3-2-为什么不会画面“撕裂”">3.2 为什么不会画面“撕裂”</h3>
+<p>所有球和挡板坐标在每帧的垂直消隐区开始附近更新一次，在当前可见区域扫描期间保持稳定。屏幕逐行输出时使用的是同一组坐标，不会画到一半突然改变球的位置。</p>
+<p>它不是双缓冲：本实验根本没有存整帧图像，而是用坐标比较和字符位图直接生成当前像素的颜色。</p>
+<h3 id="3-3-状态机参考">3.3 状态机参考</h3>
+<table>
+<thead>
+<tr>
+<th>当前状态</th>
+<th>KEY4 事件</th>
+<th>无事件时的行为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>READY</td>
+<td>RUN</td>
+<td>挡板可移动，球贴在挡板上方等待发球</td>
+</tr>
+<tr>
+<td>RUN</td>
+<td>PAUSE</td>
+<td>每帧运动、碰撞、计分；漏接后 READY 或 OVER</td>
+</tr>
+<tr>
+<td>PAUSE</td>
+<td>RUN</td>
+<td>游戏位置冻结，视频持续输出</td>
+</tr>
+<tr>
+<td>OVER</td>
+<td>READY，清分并恢复机会</td>
+<td>保持最终分数与 GAME OVER</td>
+</tr>
+</tbody>
+</table>
+<p>按键事件优先于当前帧的物理运动，所以暂停、继续或发球的那一帧不会同时额外移动球。</p>
+<h2 id="5-视频输出">5. 视频输出</h2>
+<h3 id="5-1-分辨率与时钟">5.1 分辨率与时钟</h3>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>水平</th>
+<th>垂直</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>可见区域</td>
+<td>640 像素</td>
+<td>480 行</td>
+</tr>
+<tr>
+<td>前肩</td>
+<td>16 像素</td>
+<td>10 行</td>
+</tr>
+<tr>
+<td>同步脉冲</td>
+<td>96 像素，低有效</td>
+<td>2 行，低有效</td>
+</tr>
+<tr>
+<td>后肩</td>
+<td>48 像素</td>
+<td>33 行</td>
+</tr>
+<tr>
+<td>合计</td>
+<td>800 像素</td>
+<td>525 行</td>
+</tr>
+</tbody>
+</table>
+<p>使用 25.2 MHz 像素时钟：<code>25,200,000 / (800 × 525) = 60 Hz</code>。640×480 常见标称时钟是 25.175 MHz，这里采用接近且可准确分频的 25.2 MHz。</p>
+<p>MMCM 的参数关系：<code>50 MHz / 5 × 63 = 630 MHz VCO</code>，再分别除以 25 和 5，得到 25.2 MHz 与 126 MHz。它们同源且频率比为 1:5，不是两个互不相关的时钟。</p>
+<h2 id="6-硬件、引脚和约束的意义">6. 硬件、引脚和约束的意义</h2>
+<h3 id="6-1-在-I-O-Planning-中填写的完整表格">6.1 在 I/O Planning 中填写的完整表格</h3>
+<table>
+<thead>
+<tr>
+<th>Port</th>
+<th>Package Pin</th>
+<th>I/O Standard</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sys_clk</code></td>
+<td>U18</td>
+<td>LVCMOS33</td>
+<td>50 MHz 输入</td>
+</tr>
+<tr>
+<td><code>key_n[0]</code></td>
+<td>N15</td>
+<td>LVCMOS33</td>
+<td>PL KEY1，复位</td>
+</tr>
+<tr>
+<td><code>key_n[1]</code></td>
+<td>N16</td>
+<td>LVCMOS33</td>
+<td>PL KEY2，左移</td>
+</tr>
+<tr>
+<td><code>key_n[2]</code></td>
+<td>T17</td>
+<td>LVCMOS33</td>
+<td>PL KEY3，右移</td>
+</tr>
+<tr>
+<td><code>key_n[3]</code></td>
+<td>R17</td>
+<td>LVCMOS33</td>
+<td>PL KEY4，动作</td>
+</tr>
+<tr>
+<td><code>led_n[0]</code></td>
+<td>M14</td>
+<td>LVCMOS33</td>
+<td>PL LED1，锁定</td>
+</tr>
+<tr>
+<td><code>led_n[1]</code></td>
+<td>M15</td>
+<td>LVCMOS33</td>
+<td>PL LED2，暂停</td>
+</tr>
+<tr>
+<td><code>led_n[2]</code></td>
+<td>K16</td>
+<td>LVCMOS33</td>
+<td>PL LED3，接球</td>
+</tr>
+<tr>
+<td><code>led_n[3]</code></td>
+<td>J16</td>
+<td>LVCMOS33</td>
+<td>PL LED4，结束</td>
+</tr>
+<tr>
+<td><code>hdmi_clk_p</code></td>
+<td>N18</td>
+<td>TMDS_33</td>
+<td>视频时钟正端</td>
+</tr>
+<tr>
+<td><code>hdmi_clk_n</code></td>
+<td>P19</td>
+<td>TMDS_33</td>
+<td>视频时钟负端</td>
+</tr>
+<tr>
+<td><code>hdmi_data_p[0]</code></td>
+<td>V20</td>
+<td>TMDS_33</td>
+<td>蓝通道正端</td>
+</tr>
+<tr>
+<td><code>hdmi_data_n[0]</code></td>
+<td>W20</td>
+<td>TMDS_33</td>
+<td>蓝通道负端</td>
+</tr>
+<tr>
+<td><code>hdmi_data_p[1]</code></td>
+<td>T20</td>
+<td>TMDS_33</td>
+<td>绿通道正端</td>
+</tr>
+<tr>
+<td><code>hdmi_data_n[1]</code></td>
+<td>U20</td>
+<td>TMDS_33</td>
+<td>绿通道负端</td>
+</tr>
+<tr>
+<td><code>hdmi_data_p[2]</code></td>
+<td>N20</td>
+<td>TMDS_33</td>
+<td>红通道正端</td>
+</tr>
+<tr>
+<td><code>hdmi_data_n[2]</code></td>
+<td>P20</td>
+<td>TMDS_33</td>
+<td>红通道负端</td>
+</tr>
+<tr>
+<td><code>hdmi_out_en</code></td>
+<td>V16</td>
+<td>LVCMOS33</td>
+<td>输出端 5 V 使能</td>
+</tr>
+</tbody>
+</table>
+<p>共 18 个端口位。P/N 不能交换；TMDS_33 与普通按键的 LVCMOS33 也不能混填。</p>
+<h2 id="7-实验步骤">7. 实验步骤</h2>
+<h3 id="7-1-新建工程并添加源文件">7.1 新建工程并添加源文件</h3>
+<ol>
+<li>Vivado → <strong>Create Project</strong>，工程名 <code>ax7020_pong</code>，放到新的英文路径，避免覆盖原 <code>E:/vivado/led</code>。</li>
+<li>选 <strong>RTL Project</strong>，勾选暂不指定源文件；Default Part 选择 <code>xc7z020clg400-2</code>，完成向导。</li>
+<li><strong>Add Sources → Add or create design sources → Add Files</strong>，选本实验 <code>rtl</code> 下全部 9 个 <code>.v</code>。勾选 Copy Sources into Project 后，要记住以后编辑的是工程里的副本。</li>
+<li>Design Sources 中右键 <code>pong_top</code> → <strong>Set as Top</strong>。不要把 Testbench 当成综合顶层。</li>
+</ol>
+<p><img src="/downloads/fpga/ax7020-hdmi-pong/img/image.png" srcset="/img/loading.gif" lazyload alt="alt text"></p>
+<h3 id="7-2-交互设置管脚并保存">7.2 交互设置管脚并保存</h3>
+<ol>
+<li><strong>RTL Analysis → Open Elaborated Design</strong>。</li>
+<li>Layout 下拉选择 <strong>I/O Planning</strong>，若没有表格，打开 <strong>Window → I/O Ports</strong>。</li>
+<li>展开总线，在 Package Pin 与 I/O Std 列逐项填写第 6.2 节表格。使用差分原语后，一些界面会联动显示互补管脚，仍需核对两端。</li>
+<li>使用 <strong>File → Constraints → Save</strong>，首次提示保存时命名 <code>ax7020_pong.xdc</code>，放在工程默认约束目录，加入 <code>constrs_1</code>。</li>
+</ol>
+<p>把视频信号接到真实 HDMI 连接器，并配置正确的差分电气标准。</p>
+<p><img src="/downloads/fpga/ax7020-hdmi-pong/img/io.png" srcset="/img/loading.gif" lazyload alt="alt text"></p>
+<h3 id="7-3-用时序窗口设置输入时钟和按键异步路径">7.3 用时序窗口设置输入时钟和按键异步路径</h3>
+<ol>
+<li>先 <strong>Run Synthesis → Open Synthesized Design</strong>。交互时序窗口只在综合后或实现后设计可用，因此这里先运行一次综合来打开它。</li>
+<li><strong>Window → Timing Constraints</strong>，在 <strong>Clocks → Create Clock</strong> 打开创建窗口。</li>
+<li>名称填 <code>sys_clk</code>；用浏览按钮选择顶层输入端口 <code>sys_clk</code>；Period 填 <strong>20.000 ns</strong>，Rise 0.000，Fall 10.000，确认。</li>
+<li>若窗口中已经有同一输入时钟，核对即可，不重复添加。不要创建没有源端口的虚拟时钟。</li>
+<li>在时序约束类别中选择 <strong>Set False Path</strong>，打开对话框。只在 <strong>From</strong> 中通过对象浏览器选择 4 个原始输入端口 <code>key_n[0]</code>～<code>key_n[3]</code>；其余筛选项保持空，确认。选择的是原始输入端口，不是所有寄存器，也不是所有时钟。</li>
+<li>使用 <strong>Apply</strong>（若出现），再 <strong>File → Constraints → Save</strong>，保存到当前目标 XDC。</li>
+<li>关闭设计视图，重新运行综合，让完整约束参与综合优化。</li>
+</ol>
+<p>得到以下约束：</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">create_clock</span> -period <span class="hljs-number">20</span>.<span class="hljs-number">000</span> -name sys_clk -waveform &#123;<span class="hljs-number">0</span>.<span class="hljs-number">000</span> <span class="hljs-number">10</span>.<span class="hljs-number">000</span>&#125;<span class="hljs-meta"> [get_ports -filter &#123; NAME =~  &quot;*sys_clk*&quot; &amp;&amp; DIRECTION == &quot;IN&quot; &#125;]</span><br><span class="hljs-attribute">set_false_path</span> -from<span class="hljs-meta"> [get_ports *key_n*]</span><br></code></pre></td></tr></table></figure>
+<p><img src="/downloads/fpga/ax7020-hdmi-pong/img/image-1.png" srcset="/img/loading.gif" lazyload alt="alt text"></p>
+<h3 id="7-4-实现">7.4 实现</h3>
+<ol>
+<li><strong>Run Implementation → Open Implemented Design</strong>，查看 Timing Summary、DRC 和 Clock 报告。</li>
+<li>确认像素时钟约 25.2 MHz、串化时钟约 126 MHz；检查 Setup/Hold，不能只看流程完成状态。</li>
+<li><strong>Generate Bitstream</strong>，成功后记录 <code>.bit</code> 路径。GUI 工程通常为 <code>ax7020_pong.runs/impl_1/pong_top.bit</code>。</li>
+<li>断电设置 J13 为丝印 JTAG 对应针脚。连接外部 5 V 电源、USB-JTAG，并用 HDMI 线将板卡 HDMI 接到显示屏输入；不要连接笔记本 HDMI 输出。</li>
+<li>显示屏开机并选对输入源，开发板上电。</li>
+<li><strong>Open Hardware Manager → Open target → Auto Connect → Program Device</strong>，选择本次 <code>.bit</code>。本实验未插入 ILA，不需要 <code>.ltx</code>。<br>
+<img src="/downloads/fpga/ax7020-hdmi-pong/img/image0.png" srcset="/img/loading.gif" lazyload alt="alt text"></li>
+</ol>
+<h2 id="8-测试游戏">8. 测试游戏</h2>
+<p><img src="/downloads/fpga/ax7020-hdmi-pong/img/IMG_2782.JPG" srcset="/img/loading.gif" lazyload alt="alt text"></p>
+<ol>
+<li>看到 READY、SCORE 00、LIVES 3 后，按 KEY2/KEY3 试移动挡板。</li>
+<li>按 KEY4 发球。移动挡板接住下降的球，确认分数增加、LED3 短亮。</li>
+<li>按一次 KEY4 暂停，保持按住数秒，确认不会反复切换；松开并再按一次继续。</li>
+<li>累积到 10 分并拍摄；再演示漏接。每次漏接后，仍有机会时需按 KEY4 重新发球。</li>
+<li>漏接三次后显示 GAME OVER、LIVES 0，LED4 亮。按 KEY4 开新局，再按发球；KEY1 则任何时候都可整体复位。</li>
+</ol>
+<h2 id="9-学习问答：从-Verilog-到实际电路">9. 学习问答：从 Verilog 到实际电路</h2>
+<h3 id="9-1-组合逻辑、时序逻辑、阻塞与非阻塞赋值有什么区别？">9.1 组合逻辑、时序逻辑、阻塞与非阻塞赋值有什么区别？</h3>
+<p><strong>组合逻辑负责计算，时序逻辑负责保存状态。</strong> 本项目通常“组合块用 <code>=</code>，时钟块用 <code>&lt;=</code>”。</p>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>含义</th>
+<th>Pong 例子</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>组合逻辑</td>
+<td>结果随输入变化，经过传播延迟后稳定</td>
+<td>下一位置、碰撞、像素颜色</td>
+</tr>
+<tr>
+<td>时序逻辑</td>
+<td>保存状态，主要在时钟沿更新</td>
+<td>坐标、分数、生命</td>
+</tr>
+<tr>
+<td>阻塞赋值 <code>=</code></td>
+<td>同一过程内，后面立即读到新值</td>
+<td>先算候选位置，再判断是否越界</td>
+</tr>
+<tr>
+<td>非阻塞赋值 <code>&lt;=</code></td>
+<td>执行时计算右侧，稍后统一更新左侧</td>
+<td>寄存器按更新前的数据计算新值</td>
+</tr>
+</tbody>
+</table>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs verilog"><span class="hljs-comment">// 组合块：先计算，再修正。</span><br>bx_next = ball_x + <span class="hljs-number">4</span>;<br><span class="hljs-keyword">if</span> (bx_next &gt; RIGHT-BALL) bx_next = RIGHT-BALL;<br><br><span class="hljs-comment">// 时钟块：到允许更新的时钟沿，保存结果。</span><br><span class="hljs-keyword">if</span> (frame_tick) ball_x &lt;= bx_next;<br></code></pre></td></tr></table></figure>
+<p>非阻塞赋值的“旧值”例子：</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs verilog">lives &lt;= lives - <span class="hljs-number">1&#x27;b1</span>;<br><span class="hljs-keyword">if</span> (lives == <span class="hljs-number">1</span>) state &lt;= OVER;<br></code></pre></td></tr></table></figure>
+<p>判断用的是扣减前的生命数：原来为 1，这次扣到 0 并结束。<code>&lt;=</code> 在当前仿真时刻的非阻塞更新阶段生效，不代表必须再等一拍。</p>
+<ul>
+<li><code>frame_tick</code> 是使能，不是时钟；没有更新时，位置寄存器保持原值。</li>
+<li><code>reg</code> 不保证生成寄存器，例如 <code>video_render</code> 的 RGB 仍是组合逻辑。</li>
+<li>组合块应覆盖全部赋值路径，避免意外锁存器；时钟块不赋值通常表示保持。</li>
+<li>同一过程的一次执行中，多次对同一变量非阻塞赋值，最后一次生效。</li>
+</ul>
+<h3 id="9-2-视频怎样编码、发送和还原？">9.2 视频怎样编码、发送和还原？</h3>
+<p>每个像素含 R、G、B 三个 8 位分量，三路独立编码、同时发送：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">RGB → 每路8位转10位 → 串行发送 → 差分输出 → HDMI线<br>屏幕接收 → 采样、对齐并恢复10位符号 → 解码 → RGB<br></code></pre></td></tr></table></figure>
+<p>TMDS 视频编码先用 XOR/XNOR 减少跳变，再根据历史 1、0 数量偏差决定是否取反。有效视频符号中：</p>
+<ul>
+<li><code>symbol[8]=1/0</code>：表示 XOR/XNOR。</li>
+<li><code>symbol[9]=1</code>：表示低 8 位已取反。</li>
+</ul>
+<p>显示器先撤销取反，再还原颜色。同一种颜色可能有不同码字，但标志位保证它们都能解码。</p>
+<p>串行器用 126 MHz 时钟的双沿发送，每路为 <strong>252 Mbit/s</strong>。一个像素周期内正好发送 10 位，顺序为 <code>bit0 → bit9</code>；<code>OBUFDS</code> 产生差分信号，接收端根据两线电压差识别。</p>
+<p>消隐期发送控制码，蓝通道携带行场同步。显示器利用时钟、控制码和像素顺序恢复画面位置，<strong>不需要接收 x/y 坐标</strong>。</p>
+<h3 id="9-3-本项目实现的是-DVI-吗？HDMI-还有什么编码？">9.3 本项目实现的是 DVI 吗？HDMI 还有什么编码？</h3>
+<p>本项目自己实现 DVI 1.0 的 TMDS 视频编码和控制码，经 HDMI 接口输出；串行器和差分驱动使用专用硬件，未实现 HDMI 音频、InfoFrame 等功能。</p>
+<table>
+<thead>
+<tr>
+<th>内容或模式</th>
+<th>编码</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DVI、传统 HDMI 有效视频</td>
+<td>TMDS，8 位转 10 位</td>
+</tr>
+<tr>
+<td>TMDS 控制期</td>
+<td>控制码，2 位转 10 位</td>
+</tr>
+<tr>
+<td>HDMI 数据岛的音频、辅助包</td>
+<td>TERC4，4 位转 10 位</td>
+</tr>
+<tr>
+<td>HDMI 2.1 引入的 FRL</td>
+<td>分包、纠错和 16b/18b 编码</td>
+</tr>
+</tbody>
+</table>
+<p>FRL 使用 3 或 4 路数据，从数据流恢复时钟；四通道时将原 TMDS 时钟线对也用于数据。支持 FRL 的设备仍可按连接能力选择 TMDS。</p>
+<h3 id="9-4-纯-FPGA-开发必须自己处理输出接口吗？">9.4 纯 FPGA 开发必须自己处理输出接口吗？</h3>
+<p>必须建立完整的输入输出通路，但可使用自己写的 RTL、现成 IP 或外部接口芯片。</p>
+<p>软件绘图时，图形库、驱动和 GPU 处理了许多底层细节；当前 Pong 则直接负责扫描、编码和引脚输出，还要考虑并行、时钟复位、异步输入、电气标准及资源和时序。</p>
+<p>“纯 FPGA”指游戏由硬件电路完成，不依赖 CPU 执行游戏程序，也可以使用 IP 和专用原语。</p>
+<h3 id="9-5-为什么-for-循环不一定需要多拍？">9.5 为什么 <code>for</code> 循环不一定需要多拍？</h3>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs verilog">qm[<span class="hljs-number">0</span>] = data[<span class="hljs-number">0</span>];<br><span class="hljs-keyword">for</span> (k = <span class="hljs-number">1</span>; k &lt; <span class="hljs-number">8</span>; k = k + <span class="hljs-number">1</span>)<br>    qm[k] = qm[k-<span class="hljs-number">1</span>] ^ data[k];<br></code></pre></td></tr></table></figure>
+<p>这段固定次数的组合计算会展开为逻辑连接，可理解为 7 级 XOR 链，工具还可能优化它：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">组合链：输入 → XOR → XOR → …… → 输出寄存器<br>        信号逐级传播，中间不等时钟<br><br>流水线：输入 → 运算 → 寄存器 → 运算 → 寄存器<br>                       ↑时钟            ↑时钟<br></code></pre></td></tr></table></figure>
+<p><strong>前后依赖产生传播延迟，不代表每级占一拍。</strong> 看需要几拍，应看寄存器和更新控制；要每拍只处理一位，需另设计数器、控制逻辑和中间寄存器。</p>
+<h3 id="9-6-组合电路太长，会发生什么？">9.6 组合电路太长，会发生什么？</h3>
+<p>信号必须在下一采样沿前稳定。典型建立时间要求为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">时钟周期 ≥ 寄存器输出延迟 + 组合逻辑及布线延迟<br>         + 建立时间 + 时钟相关裕量<br></code></pre></td></tr></table></figure>
+<p>25.2 MHz 的周期约 39.68 ns；若总需求为 45 ns，就会发生建立时间违例。</p>
+<table>
+<thead>
+<tr>
+<th>循环形式</th>
+<th>主要影响</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>q[k] = q[k-1] ^ d[k]</code></td>
+<td>依赖链变长，通常增加延迟</td>
+</tr>
+<tr>
+<td><code>q[k] = a[k] ^ b[k]</code></td>
+<td>独立并行，主要增加资源和布线需求</td>
+</tr>
+</tbody>
+</table>
+<p>实际延迟受综合优化和布线影响，要看布局布线后的时序报告。</p>
+<h3 id="9-7-当前-25-2-MHz-下的裕量是多少？">9.7 当前 25.2 MHz 下的裕量是多少？</h3>
+<p>2026-10-21 14:56 的实现报告记录如下，只代表该次结果：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>像素周期</td>
+<td>39.683 ns</td>
+</tr>
+<tr>
+<td>最差建立裕量 WNS</td>
+<td>+21.894 ns</td>
+</tr>
+<tr>
+<td>最差保持裕量 WHS</td>
+<td>+0.121 ns</td>
+</tr>
+<tr>
+<td>建立、保持违例端点</td>
+<td>均为 0</td>
+</tr>
+<tr>
+<td>最差建立路径数据延迟</td>
+<td>17.137 ns：逻辑 6.225 ns、布线 10.912 ns</td>
+</tr>
+</tbody>
+</table>
+<p><strong>当前建立裕量较充足，但不能按代码数量推算还能增加多少功能。</strong> 建立与保持是两项检查；126 MHz 串行时钟已识别，另有 7 个端口未设置输出延迟，内部时序通过不等于外部 HDMI 链路已完整验证。</p>
+<h3 id="9-8-延迟太长怎样处理？降频有什么影响？">9.8 延迟太长怎样处理？降频有什么影响？</h3>
+<p>可选择优化逻辑、合理缩短运算位宽、加流水线、分多拍计算，或降低频率。降频延长等待时间，不会让组合电路本身算得更快。</p>
+<p>当前 MMCM 为 <code>50÷5×63=630 MHz</code>，再除以 25、5 得到 25.2、126 MHz。若改为下面的输出分频，两路均减半且仍保持 1:5：</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs verilog"><span class="hljs-variable">.CLKOUT0_DIVIDE_F</span>(<span class="hljs-number">50</span><span class="hljs-variable">.0</span>),  <span class="hljs-comment">// 12.6 MHz</span><br><span class="hljs-variable">.CLKOUT1_DIVIDE</span>(<span class="hljs-number">10</span>),      <span class="hljs-comment">// 63 MHz</span><br></code></pre></td></tr></table></figure>
+<p>这只是降频示例，不是合适的视频配置建议。扫描总周期数不变时，刷新率变成 30 Hz，游戏移动速度约减半，消抖时间变为 20 ms，显示器还可能无法识别。</p>
+<p>修改 MMCM 才改变实际频率，只改 XDC 不会降频；50 MHz 输入的约束仍是 20 ns。改后要重新实现、检查时序并生成比特流。</p>
+<p>对 Pong，优先保留视频时钟：绘图复杂时加流水线，并对齐 RGB、<code>de</code> 和同步信号；游戏规则复杂时拆成多拍。独立慢时钟域则需处理跨时钟域通信。</p>
+<h3 id="9-9-FPGA-怎样变成电路？比特流起什么作用？">9.9 FPGA 怎样变成电路？比特流起什么作用？</h3>
+<p>芯片出厂时已有 LUT、触发器、专用硬件、金属线段和连接开关。配置决定它们的功能、连接、时钟参数和 I/O 行为。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">Verilog + XDC → 综合成网表 → 布局和布线 → 生成 .bit<br>             → 下载配置 → 电路响应输入和时钟<br></code></pre></td></tr></table></figure>
+<p>运行时，信号沿组合电路传播，寄存器在时钟沿保存结果。例如球坐标为 315，加法电路算出 319，允许更新的时钟沿再保存 319。</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>内容</th>
+<th>变化时机</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>配置数据</td>
+<td>LUT 真值表、连接路径、MMCM 参数</td>
+<td>下载或重新配置</td>
+</tr>
+<tr>
+<td>运行状态</td>
+<td>球坐标、分数、生命</td>
+<td>游戏运行时</td>
+</tr>
+</tbody>
+</table>
+<p>球移动只改变状态，不会重新布线。该 FPGA 的配置断电后需重新加载，上电自动运行要配合板卡启动流程。</p>
+<p>Vivado“布线完成”表示方案已确定，“比特流完成”表示文件已生成，下载后才在板上生效。</p>
+<h3 id="9-10-资源数量够，为什么仍可能实现不了？">9.10 资源数量够，为什么仍可能实现不了？</h3>
+<p><strong>设计必须同时放得下、连得上、来得及。</strong></p>
+<table>
+<thead>
+<tr>
+<th>条件</th>
+<th>限制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>放得下</td>
+<td>资源位置、相邻关系、时钟和 I/O 区域、共享控制条件</td>
+</tr>
+<tr>
+<td>连得上</td>
+<td>局部线路和连接点不足，产生拥塞</td>
+</tr>
+<tr>
+<td>来得及</td>
+<td>组合逻辑过深或绕路过远，不能满足目标频率</td>
+</tr>
+</tbody>
+</table>
+<p>FPGA 有丰富的局部、长距离和专用连接，但线路有限，不能保证任意两点都独立直连。放置或布线失败意味着实现不完整；布线完成但时序失败，意味着不能保证在目标频率下正确运行。降频不会直接增加器件或线路数量。</p>
+<h3 id="9-11-进一步查阅">9.11 进一步查阅</h3>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.amd.com/r/en-US/ug474_7Series_CLB/Look-Up-Table">AMD：LUT 的结构与功能</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.amd.com/r/en-US/ug474_7Series_CLB/Interconnect-Resources">AMD：可编程互连资源</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.amd.com/r/en-US/ug953-vivado-7series-libraries/MMCME2_BASE">AMD：MMCM 参数</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.amd.com/r/en-US/ug949-vivado-design-methodology/Pipelining-Considerations">AMD：流水线设计</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.amd.com/r/en-US/ug893-vivado-ide/Schematic-Window-Toolbar-Commands">AMD：Schematic 工具栏</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.amd.com/r/en-US/ug949-vivado-design-methodology/Interconnect-Congestion-Level-in-the-Device-Window">AMD：布线拥塞</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.ti.com/lit/ds/symlink/tfp401.pdf">TI：TMDS 接收、同步和解码</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.amd.com/r/en-US/pg350-v-hdmi-txss1/HDMI-2.1-Transmitter">AMD：HDMI 的 TMDS 与 FRL 传输路径</a></li>
+</ul>
+<h2 id="实验附件">实验附件</h2>
+<ul>
+<li><a href="/downloads/fpga/ax7020-hdmi-pong/ax7020-hdmi-pong-files.zip">下载完整附件 ZIP</a>（9 个 RTL、仿真、约束、构建脚本、图片、已有比特流与报告）</li>
+<li><a href="/downloads/fpga/ax7020-hdmi-pong/AX7020_HDMI.md">下载 Markdown 笔记</a></li>
+<li><a href="/downloads/fpga/ax7020-hdmi-pong/reference/ax7020_pong.xdc">引脚及时序约束</a>、<a href="/downloads/fpga/ax7020-hdmi-pong/scripts/build.tcl">构建脚本</a>、<a href="/downloads/fpga/ax7020-hdmi-pong/scripts/run_tests.ps1">仿真脚本</a></li>
+<li><a href="/fpga/ax7020-led/">基础实验：LED 同步闪烁</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/FPGA/" class="category-chain-item">FPGA</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/FPGA/AX7020/" class="category-chain-item">AX7020</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/FPGA/" class="print-no-link">#FPGA</a>
+      
+        <a href="/tags/AX7020/" class="print-no-link">#AX7020</a>
+      
+        <a href="/tags/Verilog/" class="print-no-link">#Verilog</a>
+      
+        <a href="/tags/Vivado/" class="print-no-link">#Vivado</a>
+      
+        <a href="/tags/HDMI/" class="print-no-link">#HDMI</a>
+      
+        <a href="/tags/Pong/" class="print-no-link">#Pong</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>AX7020 纯 FPGA 实验：HDMI 挡板接球游戏</div>
+      <div>https://sebma369.github.io/fpga/ax7020-hdmi-pong/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>Seb Ma</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>October 21, 2026</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/fpga/ax7020-led/" title="AX7020 FPGA 零基础实验：LED 同步闪烁">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">AX7020 FPGA 零基础实验：LED 同步闪烁</span>
+                        <span class="visible-mobile">Previous</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/09/18/%E7%BD%91%E7%BB%9C%E6%B5%81-CCPC2024G/" title="网络流(CCPC2024G)">
+                        <span class="hidden-mobile">网络流(CCPC2024G)</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>

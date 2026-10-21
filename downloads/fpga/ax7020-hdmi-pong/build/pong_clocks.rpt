@@ -1,0 +1,69 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
+| Date         : Tue Oct 20 16:06:21 2026
+| Host         : LAPTOP-F2DM80V2 running 64-bit major release  (build 9200)
+| Command      : report_clocks -file E:/learn/FPGA/hdmi_pong/build/pong_clocks.rpt
+| Design       : pong_top
+| Device       : 7z020-clg400
+| Speed File   : -2  PRODUCTION 1.12 2019-11-22
+| Design State : Routed
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Clock Report
+
+
+Attributes
+  P: Propagated
+  G: Generated
+  A: Auto-derived
+  R: Renamed
+  V: Virtual
+  I: Inverted
+  S: Pin phase-shifted with Latency mode
+
+Clock       Period(ns)  Waveform(ns)    Attributes  Sources
+sys_clk     20.000      {0.000 10.000}  P           {sys_clk}
+feedback    100.000     {0.000 50.000}  P,G,A       {clocks/mmcm/CLKFBOUT}
+pixel_raw   39.683      {0.000 19.841}  P,G,A       {clocks/mmcm/CLKOUT0}
+serial_raw  7.937       {0.000 3.968}   P,G,A       {clocks/mmcm/CLKOUT1}
+
+
+====================================================
+Generated Clocks
+====================================================
+
+Generated Clock     : feedback
+Master Source       : clocks/mmcm/CLKIN1
+Master Clock        : sys_clk
+Edges               : {1 2 3}
+Edge Shifts(ns)     : {0.000 40.000 80.000}
+Generated Sources   : {clocks/mmcm/CLKFBOUT}
+
+Generated Clock     : pixel_raw
+Master Source       : clocks/mmcm/CLKIN1
+Master Clock        : sys_clk
+Edges               : {1 2 3}
+Edge Shifts(ns)     : {0.000 9.841 19.683}
+Generated Sources   : {clocks/mmcm/CLKOUT0}
+
+Generated Clock     : serial_raw
+Master Source       : clocks/mmcm/CLKIN1
+Master Clock        : sys_clk
+Edges               : {1 2 3}
+Edge Shifts(ns)     : {0.000 -6.032 -12.063}
+Generated Sources   : {clocks/mmcm/CLKOUT1}
+
+
+
+====================================================
+User Uncertainty
+====================================================
+
+
+
+====================================================
+User Jitter
+====================================================
+
+

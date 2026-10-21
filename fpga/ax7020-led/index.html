@@ -1,0 +1,1069 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Seb Ma">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="从 Vivado 新建工程到行为仿真、引脚约束、时序检查、JTAG 下载和 ILA 观测，完成四个 LED 同步闪烁实验。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AX7020 FPGA 零基础实验：LED 同步闪烁">
+<meta property="og:url" content="https://sebma369.github.io/fpga/ax7020-led/index.html">
+<meta property="og:site_name" content="SebMa&#39;s blog">
+<meta property="og:description" content="从 Vivado 新建工程到行为仿真、引脚约束、时序检查、JTAG 下载和 ILA 观测，完成四个 LED 同步闪烁实验。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://sebma369.github.io/downloads/fpga/ax7020-led/img/image.png">
+<meta property="og:image" content="https://sebma369.github.io/downloads/fpga/ax7020-led/img/image-1.png">
+<meta property="og:image" content="https://sebma369.github.io/downloads/fpga/ax7020-led/img/xdc.png">
+<meta property="article:published_time" content="2026-10-21T12:00:00.000Z">
+<meta property="article:modified_time" content="2026-10-21T12:45:12.807Z">
+<meta property="article:author" content="Seb Ma">
+<meta property="article:tag" content="FPGA">
+<meta property="article:tag" content="AX7020">
+<meta property="article:tag" content="Verilog">
+<meta property="article:tag" content="Vivado">
+<meta property="article:tag" content="LED">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sebma369.github.io/downloads/fpga/ax7020-led/img/image.png">
+  
+  
+  
+  <title>AX7020 FPGA 零基础实验：LED 同步闪烁 - SebMa&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"sebma369.github.io","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>SebMa&#39;s blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="AX7020 FPGA 零基础实验：LED 同步闪烁"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-10-21 20:00" pubdate>
+          October 21, 2026 pm
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          9.2k words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          77 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">AX7020 FPGA 零基础实验：LED 同步闪烁</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>本实验从 Vivado 新建工程开始，完成“编写 HDL → 行为仿真 → 添加约束 → 综合 → 实现 → 生成比特流 → JTAG 下载 → 实物验证”的完整流程。</p>
+<p><strong>实验效果：4 个 PL 用户 LED 同时亮、同时灭，每隔约 1 秒切换一次，完整亮灭周期约 2 秒。</strong></p>
+<p>开发板为 AX7020。实验只使用 PL，不需要PS。</p>
+</blockquote>
+<h2 id="1-实验目标与基本原理">1. 实验目标与基本原理</h2>
+<h3 id="1-1-实验内容">1.1 实验内容</h3>
+<ul>
+<li>从空白工程开始添加设计源文件、仿真源文件和约束文件。</li>
+<li>理解计数器如何把 50 MHz 时钟转换为肉眼能观察到的亮灭变化。</li>
+<li>检查仿真波形、综合结果、实现后的时序和 DRC。</li>
+<li>通过板载 USB-JTAG 下载 <code>.bit</code>，验证 4 个 PL LED 同步闪烁。</li>
+<li>使用 PL KEY1 复位，并保存完整的实验记录。</li>
+</ul>
+<h3 id="1-2-PS-与-PL">1.2 PS 与 PL</h3>
+<p>AX7020 的 Zynq 芯片包含 PS（处理器系统）和 PL（可编程逻辑）。本实验直接在 PL 中构建计数器和 LED 控制电路，使用板载 PL 晶振，不编写 PS 端 ARM 程序。</p>
+<p>Verilog 描述的是硬件电路。计数器、比较逻辑和 LED 寄存器综合后在 FPGA 内工作，代码不是交给 ARM 按行执行的软件。</p>
+<h3 id="1-3-为什么-LED-每隔-1-秒切换">1.3 为什么 LED 每隔 1 秒切换</h3>
+<p>板载 PL 时钟是 50 MHz，即每个周期 20 ns。代码中的计数器从 <code>0</code> 数到 <code>49_999_999</code>，共经历 50,000,000 个周期，再把 4 位 LED 输出全部取反：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">一个时钟周期 = 1 / 50 MHz = 20 ns<br>切换间隔     = 50,000,000 × 20 ns = 1 s<br></code></pre></td></tr></table></figure>
+<p>计数器控制的是“什么时候更新 LED”，整个电路仍使用 50 MHz 时钟，没有另造一根慢时钟。</p>
+<p>AX7020 的 PL LED <strong>低电平点亮、高电平熄灭</strong>，因此：</p>
+<table>
+<thead>
+<tr>
+<th>条件 / 输出</th>
+<th>实际现象</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>按住复位，<code>rst_n = 0</code></td>
+<td><code>led = 0000</code>，4 灯全亮，计数清零</td>
+</tr>
+<tr>
+<td>松开复位后，计数未满</td>
+<td>保持当前亮灭状态</td>
+</tr>
+<tr>
+<td>计数达到终值后</td>
+<td><code>led &lt;= ~led</code>，4 灯同时切换亮灭</td>
+</tr>
+<tr>
+<td><code>led = 0000</code></td>
+<td>4 灯全亮</td>
+</tr>
+<tr>
+<td><code>led = 1111</code></td>
+<td>4 灯全灭</td>
+</tr>
+</tbody>
+</table>
+<h3 id="1-4-源文件作用">1.4 源文件作用</h3>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>led.v</code></td>
+<td>描述计数、复位和 LED 控制电路，最终综合为硬件</td>
+</tr>
+<tr>
+<td><code>vtf_led_test.v</code></td>
+<td>在电脑里产生模拟时钟和复位，观察电路行为</td>
+</tr>
+<tr>
+<td><code>led.xdc</code></td>
+<td>连接真实管脚，指定 I/O 电平与时钟周期</td>
+</tr>
+</tbody>
+</table>
+<p>上板下载的是后续生成的 <code>.bit</code> 文件。</p>
+<p>行为仿真检查逻辑行为，实现后的静态时序分析检查实际布线延迟能否满足时钟要求，两者作用不同。</p>
+<p><img src="/downloads/fpga/ax7020-led/img/image.png" srcset="/img/loading.gif" lazyload alt="FPGA 典型开发流程，原笔记已有图片"></p>
+<h2 id="2-实验前准备：软件、板卡与型号核对">2. 实验前准备：软件、板卡与型号核对</h2>
+<h3 id="2-2-Project-Device：xc7z020clg400-2">2.2 Project Device：xc7z020clg400-2</h3>
+<p><img src="/downloads/fpga/ax7020-led/img/image-1.png" srcset="/img/loading.gif" lazyload alt="alt text"></p>
+<h3 id="2-3-本实验使用的硬件资源">2.3 本实验使用的硬件资源</h3>
+<p>| 资源 | 来源 | 管脚或参数 | 手册位置 |<br>
+| — | — | — | — || <code>sys_clk</code> | PL 50 MHz 晶振，PL_GCLK | U18，周期 20 ns | 第 15～16 页 |<br>
+| <code>rst_n</code> | PL KEY1，松开为 1，按下为 0 | N15 | 第 42～43 页 |<br>
+| <code>led[0]</code> | PL LED1，低电平亮 | M14 | 第 41～42 页 |<br>
+| <code>led[1]</code> | PL LED2，低电平亮 | M15 | 第 41～42 页 |<br>
+| <code>led[2]</code> | PL LED3，低电平亮 | K16 | 第 41～42 页 |<br>
+| <code>led[3]</code> | PL LED4，低电平亮 | J16 | 第 41～42 页 |<br>
+| I/O 电平 | 本实验涉及的 PL I/O | LVCMOS33，3.3 V | 第 13、15、41～42 页 |<br>
+| 下载连接 | 板载 USB-JTAG，FT232HL | USB 数据线 | 第 12～13 页 |<br>
+| 启动选择 | J13 | JTAG 对应针脚 | 第 14 页 |</p>
+<p>本实验把 <strong>PL KEY1</strong> 用作自己设计电路的复位输入，不能用 PS 系统复位键代替。若板卡硬件版本与当前手册不同，应先核对对应版本的原理图。</p>
+<h2 id="3-第一步：在-Vivado-新建-RTL-工程">3. 第一步：在 Vivado 新建 RTL 工程</h2>
+<ol start="2">
+<li>在向导首页点击 <strong>Next</strong>。</li>
+<li>在 <strong>Project Name</strong> 页填写：
+<ul>
+<li>Project name：<code>led</code>。</li>
+<li>Project location：<code>E:/learn/FPGA/vivado_projects</code>，也可使用自己准备的英文路径。</li>
+<li>勾选 <strong>Create project subdirectory</strong>。</li>
+</ul>
+</li>
+<li>点击 <strong>Next</strong>，在 <strong>Project Type</strong> 页选择 <strong>RTL Project</strong>。</li>
+<li>点击 <strong>Next</strong>，进入 <strong>Default Part</strong>，选择 <strong>Parts</strong> 页签，不要求提前安装 AX7020 Board File。</li>
+<li>搜索并选择 <strong><code>xc7z020clg400-2</code></strong>，检查芯片 <code>xc7z020</code>、封装 <code>clg400</code>、速度等级 <code>-2</code>，与已有工程一致。</li>
+<li>若搜索不到目标器件，先检查 Zynq-7000 器件支持是否安装；不要选择相近的其他封装代替。</li>
+<li>点击 <strong>Next</strong>，在汇总页核对工程位置、RTL Project 和 Part，再点击 <strong>Finish</strong>。</li>
+</ol>
+<p><strong>目的</strong>：建立管理源文件、约束和编译结果的工程，并告诉 Vivado 为哪一种 FPGA 生成电路。</p>
+<h2 id="4-第二步：创建并填写设计文件-led-v">4. 第二步：创建并填写设计文件 led.v</h2>
+<h3 id="4-1-添加-Design-Source">4.1 添加 Design Source</h3>
+<ol>
+<li>点击 <strong>Project Manager → Add Sources</strong>，或 Sources 窗口中的 <code>+</code>。</li>
+<li>选择 <strong>Add or create design sources → Next</strong>。</li>
+<li>点击 <strong>Create File</strong>，File type 选 <strong>Verilog</strong>，File name 填 <code>led</code>，位置使用工程默认位置。</li>
+<li>点击 <strong>OK → Finish</strong>。</li>
+<li>若出现 <strong>Define Module</strong>，可直接确认；若提示没有定义端口，确认继续，随后用下面的完整代码替换模板。</li>
+<li>在 <strong>Design Sources</strong> 中双击 <code>led.v</code>，全选原内容，粘贴下面的代码，按 <code>Ctrl+S</code> 保存。</li>
+<li>右键 Design Sources 下的模块 <code>led</code>，选择 <strong>Set as Top</strong>。若已是顶层，只需确认其顶层标记。</li>
+</ol>
+<p><strong>目的</strong>：创建将被综合成真实硬件的顶层模块。顶层端口将在 XDC 中连接到板卡管脚。</p>
+<p><strong>预期结果</strong>：Design Sources 下出现 <code>led</code>，输入为 <code>sys_clk</code>、<code>rst_n</code>，输出为 4 位 <code>led</code>，没有语法错误标记。</p>
+<h3 id="4-2-原设计代码">4.2 原设计代码</h3>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><code class="hljs verilog"><span class="hljs-comment">// 本实验使用 50 MHz 时钟，每个周期为 20 ns。</span><br><span class="hljs-comment">// AX7020 的 PL LED 低电平点亮：0000 为四灯全亮，1111 为四灯全灭。</span><br><span class="hljs-comment">// 本代码直接使用异步按键复位，未加入复位释放同步链和机械消抖。</span><br><span class="hljs-comment">// 实物测试时按住 PL KEY1 再松开，检查复位与重新计时的行为。</span><br><span class="hljs-comment">// 后续复杂设计需考虑复位同步和按键消抖；行为仿真不能证明硬件无亚稳态。</span><br><span class="hljs-keyword">module</span> led (<br>    <span class="hljs-comment">// 接收板载 50 MHz 时钟，电路在每个上升沿更新时序逻辑。</span><br>    <span class="hljs-keyword">input</span> sys_clk,<br>    <span class="hljs-comment">// 低有效复位，连接 PL KEY1：按下为 0，松开为 1。</span><br>    <span class="hljs-keyword">input</span> rst_n,<br>    <span class="hljs-comment">// 四个位分别驱动 4 个 PL LED，保存当前亮灭状态。</span><br>    <span class="hljs-keyword">output</span> <span class="hljs-keyword">reg</span> [<span class="hljs-number">3</span>:<span class="hljs-number">0</span>] led<br>    );<br><br><span class="hljs-comment">// 32 位计数器，用于累计时钟周期，能够容纳终值 49,999,999。</span><br><span class="hljs-keyword">reg</span>[<span class="hljs-number">31</span>:<span class="hljs-number">0</span>] timer_cnt;<br><br><span class="hljs-comment">// 时钟上升沿触发更新；复位下降沿可异步触发，无需等待时钟沿。</span><br><span class="hljs-comment">// 下方 &lt;= 是非阻塞赋值，同一时钟沿的条件判断使用更新前的寄存器值。</span><br><span class="hljs-keyword">always</span>@ (<span class="hljs-keyword">posedge</span> sys_clk <span class="hljs-keyword">or</span> <span class="hljs-keyword">negedge</span> rst_n)<br><span class="hljs-keyword">begin</span><br>    <span class="hljs-keyword">if</span> (!rst_n)<br>    <span class="hljs-keyword">begin</span><br>        <span class="hljs-comment">// 复位时 LED 输出全 0，四灯全亮，同时清零计数器。</span><br>        led &lt;= <span class="hljs-number">4&#x27;d0</span> ;<br>        timer_cnt &lt;= <span class="hljs-number">32&#x27;d0</span> ;<br>    <span class="hljs-keyword">end</span><br>    <span class="hljs-comment">// 从 0 数到 49,999,999，共 50,000,000 个周期，切换间隔为 1 秒。</span><br>    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(timer_cnt &gt;= <span class="hljs-number">32&#x27;d49_999_999</span>)<br>    <span class="hljs-keyword">begin</span><br>        <span class="hljs-comment">// 四位一起取反：0000 与 1111 交替，四灯同时亮灭。</span><br>        led &lt;= ~led;<br>        <span class="hljs-comment">// 切换后重新计数，使亮、灭各保持约 1 秒，完整周期约 2 秒。</span><br>        timer_cnt &lt;= <span class="hljs-number">32&#x27;d0</span>;<br>    <span class="hljs-keyword">end</span><br>    <span class="hljs-keyword">else</span><br>    <span class="hljs-keyword">begin</span><br>        <span class="hljs-comment">// 未计满时保持 LED 状态，计数器每个时钟周期加 1。</span><br>        led &lt;= led;<br>        timer_cnt &lt;= timer_cnt + <span class="hljs-number">32&#x27;d1</span>;<br>    <span class="hljs-keyword">end</span><br><br><span class="hljs-keyword">end</span><br><br><span class="hljs-keyword">endmodule</span><br></code></pre></td></tr></table></figure>
+<h2 id="5-第三步：创建仿真文件-vtf-led-test-v">5. 第三步：创建仿真文件 vtf_led_test.v</h2>
+<h3 id="5-1-添加-Simulation-Source">5.1 添加 Simulation Source</h3>
+<p><strong>操作</strong></p>
+<ol>
+<li>点击 <strong>Add Sources</strong>。</li>
+<li>选择 <strong>Add or create simulation sources → Next</strong>，仿真集保持为 <code>sim_1</code>。</li>
+<li>点击 <strong>Create File</strong>，类型选 <strong>Verilog</strong>，名称填 <code>vtf_led_test</code>，点击 <strong>OK → Finish</strong>。</li>
+<li>如果出现 Define Module，确认后使用下面的完整代码替换模板。</li>
+<li>在 <strong>Simulation Sources</strong> 中双击文件，粘贴并保存。</li>
+<li>在 Simulation Sources 中右键 <code>vtf_led_test</code>，选择 <strong>Set as Top</strong>。</li>
+<li>确认仿真顶层为 <code>vtf_led_test</code>，设计顶层仍为 <code>led</code>。仿真层次中可以看到 <code>uut</code> 实例。</li>
+</ol>
+<p><strong>目的</strong>：在电脑中产生时钟和复位，先观察电路行为，再进行上板操作。</p>
+<p><strong>预期结果</strong>：仿真结构为 <code>vtf_led_test → uut (led)</code>；Testbench 不作为硬件综合顶层。</p>
+<h3 id="5-2-Testbench">5.2 Testbench</h3>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs verilog"><span class="hljs-meta">`<span class="hljs-keyword">timescale</span> 1ns / 1ps</span><br><br><span class="hljs-comment">// Module Name: vtf led test</span><br><br><span class="hljs-keyword">module</span> vtf_led_test;<br><span class="hljs-comment">//Inputs</span><br>    <span class="hljs-keyword">reg</span> sys_clk;<br>    <span class="hljs-keyword">reg</span> rst_n ;<br><span class="hljs-comment">// Outputs</span><br>    <span class="hljs-keyword">wire</span> [<span class="hljs-number">3</span>:<span class="hljs-number">0</span>] led;<br><br><span class="hljs-comment">// Instantiate the Unit Under Test (UUT)</span><br>led uut (<br>    <span class="hljs-variable">.sys_clk</span>(sys_clk),<br>    <span class="hljs-variable">.rst_n</span>(rst_n),<br>    <span class="hljs-variable">.led</span>(led)<br>    );<br><br><span class="hljs-keyword">initial</span><br><span class="hljs-keyword">begin</span><br><span class="hljs-comment">//Initialize Inputs</span><br>    sys_clk = <span class="hljs-number">0</span>;<br>    rst_n = <span class="hljs-number">0</span> ;<br>    #<span class="hljs-number">1000</span>;<br>    rst_n = <span class="hljs-number">1</span>;<br><span class="hljs-keyword">end</span><br><span class="hljs-comment">//Create clock</span><br><span class="hljs-keyword">always</span> #<span class="hljs-number">10</span> sys_clk =~ sys_clk;<br><br><span class="hljs-keyword">endmodule</span><br></code></pre></td></tr></table></figure>
+<p><code>timescale 1ns / 1ps</code> 表示时间单位为 1 ns、精度为 1 ps。<code>#1000</code> 让复位保持 1000 ns；<code>always #10</code> 每 10 ns 翻转时钟，完整周期为 20 ns，对应 50 MHz。</p>
+<h2 id="6-第四步：运行行为仿真并观察闪烁">6. 第四步：运行行为仿真并观察闪烁</h2>
+<h3 id="6-1-启动仿真与添加信号">6.1 启动仿真与添加信号</h3>
+<p><strong>操作</strong></p>
+<ol>
+<li>保存两个 <code>.v</code> 文件。</li>
+<li>点击 <strong>Simulation → Run Simulation → Run Behavioral Simulation</strong>。</li>
+<li>等待编译、展开和 XSim 启动。若失败，查看 Messages 和仿真日志中的第一条实际错误，修正后重试。</li>
+<li>在波形中查看 <code>sys_clk</code>、<code>rst_n</code>、<code>led</code>。若未显示，在 <strong>Scope</strong> 中选顶层，在 <strong>Objects</strong> 中选信号，右键 <strong>Add to Wave Window</strong>。</li>
+<li>在 Scope 中展开 <code>uut</code>，找到 <code>timer_cnt</code>，也添加到波形窗口。</li>
+<li>右键 <code>led</code>，将 <strong>Radix</strong> 设为 <strong>Binary</strong>；<code>timer_cnt</code> 可设为 <strong>Unsigned Decimal</strong>。</li>
+<li>先观察初始约 2 μs。可在仿真 Tcl Console 输入下面的命令；<code>restart</code> 会回到仿真起点。</li>
+</ol>
+<p><strong>目的</strong>：先确认时钟、复位和计数器启动正常，避免直接长时间运行后才发现输入错误。</p>
+<h3 id="6-2-运行足够长时间观察完整亮灭">6.2 运行足够长时间观察完整亮灭</h3>
+<p><strong>操作</strong></p>
+<ol>
+<li>在仿真 Tcl Console 输入：</li>
+</ol>
+<figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs tcl">restart<br>run <span class="hljs-number">2100</span> ms<br></code></pre></td></tr></table></figure>
+<p>放大到跳变附近，观察 <code>timer_cnt</code> 从终值清零。</p>
+<ul>
+<li><code>led</code> 先保持 <code>0000</code>，随后变为 <code>1111</code>，再变回 <code>0000</code>。</li>
+<li>相邻切换间隔为 1 秒，完整亮灭周期为 2 秒。</li>
+<li>由于先保持复位 1000 ns、再等有效时钟沿，首次切换发生在复位释放后约 1 秒，而不是仿真绝对时间恰好 1 秒。</li>
+<li>每次切换时，<code>timer_cnt</code> 清零并重新计数。</li>
+</ul>
+<h2 id="7-第五步：设置管脚并生成-XDC">7. 第五步：设置管脚并生成 XDC</h2>
+<h3 id="7-1-XDC-文件是干什么的">7.1 XDC 文件是干什么的</h3>
+<p><strong>XDC（Xilinx Design Constraints）是 Vivado 的设计约束文件</strong>，用于保存电路与实际器件、板卡及时序要求之间的关系。本实验需要保存三类信息：</p>
+<table>
+<thead>
+<tr>
+<th>约束内容</th>
+<th>要回答的问题</th>
+<th>本实验的例子</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>管脚位置</td>
+<td>代码里的端口接到芯片哪个引脚？</td>
+<td><code>sys_clk</code> 接 U18，<code>led[0]</code> 接 M14</td>
+</tr>
+<tr>
+<td>I/O 电平标准</td>
+<td>端口使用什么电气标准？</td>
+<td>6 个端口位均为 LVCMOS33，与板卡 3.3 V I/O 对应</td>
+</tr>
+<tr>
+<td>时钟周期</td>
+<td>工具应按多快的时钟检查电路延迟？</td>
+<td><code>sys_clk</code> 为 50 MHz，周期 20 ns</td>
+</tr>
+</tbody>
+</table>
+<p>例如，<code>output reg [3:0] led</code> 只声明了 4 个输出，并没有说明它们接到 AX7020 的哪 4 个 LED。管脚约束将这些信号绑定到实际引脚；时钟约束则让工具知道电路每 20 ns 就要完成一次相应的时序传递。</p>
+<p>使用图形窗口填写管脚和电平，再由 Vivado 保存生成 <code>led.xdc</code>。时钟设置将在第 9 节打开综合后设计时，通过另一个交互窗口追加到同一文件。</p>
+<ol>
+<li>点击 <strong>RTL Analysis → Open Elaborated Design</strong>，等待 RTL 展开完成。</li>
+<li>在工具栏的 <strong>Layout</strong> 布局下拉框中选择 <strong>I/O Planning</strong>。</li>
+<li>找到 <strong>I/O Ports</strong> 表格。若未显示，点击 <strong>Window → I/O Ports</strong>；必要时同时打开 <strong>Package</strong> 视图查看封装。</li>
+<li>展开 <code>led[3:0]</code> 总线，确认可以看到 <code>led[0]</code>～<code>led[3]</code>，以及 <code>sys_clk</code>、<code>rst_n</code>，共 6 个端口位。</li>
+</ol>
+<p>I/O Ports 中能看到端口名、方向、<strong>Package Pin</strong> 和 <strong>I/O Std</strong> 等列；未设置的位置可能为空，电平可能显示 DEFAULT。若某列被隐藏，可调整表格宽度或在列标题菜单中显示该列。<br>
+<img src="/downloads/fpga/ax7020-led/img/xdc.png" srcset="/img/loading.gif" lazyload alt="alt text"></p>
+<h3 id="7-2-在表格中填写管脚和电平">7.2 在表格中填写管脚和电平</h3>
+<table>
+<thead>
+<tr>
+<th>Port Name</th>
+<th>Direction</th>
+<th>Package Pin</th>
+<th>I/O Std</th>
+<th>对应硬件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sys_clk</code></td>
+<td>Input</td>
+<td>U18</td>
+<td>LVCMOS33</td>
+<td>PL 50 MHz 晶振</td>
+</tr>
+<tr>
+<td><code>rst_n</code></td>
+<td>Input</td>
+<td>N15</td>
+<td>LVCMOS33</td>
+<td>PL KEY1，低有效复位</td>
+</tr>
+<tr>
+<td><code>led[0]</code></td>
+<td>Output</td>
+<td>M14</td>
+<td>LVCMOS33</td>
+<td>PL LED1</td>
+</tr>
+<tr>
+<td><code>led[1]</code></td>
+<td>Output</td>
+<td>M15</td>
+<td>LVCMOS33</td>
+<td>PL LED2</td>
+</tr>
+<tr>
+<td><code>led[2]</code></td>
+<td>Output</td>
+<td>K16</td>
+<td>LVCMOS33</td>
+<td>PL LED3</td>
+</tr>
+<tr>
+<td><code>led[3]</code></td>
+<td>Output</td>
+<td>J16</td>
+<td>LVCMOS33</td>
+<td>PL LED4</td>
+</tr>
+</tbody>
+</table>
+<p>6 个端口位均显示指定管脚和 LVCMOS33；Package 视图中可定位相应引脚。这里填写的是芯片的 BGA 管脚号，不是板上连接器的排针序号。</p>
+<h3 id="7-4-保存设置，生成-led-xdc">7.4 保存设置，生成 led.xdc</h3>
+<ol>
+<li>在设计视图中点击 <strong>File → Constraints → Save</strong>，或点击 <strong>Save Constraints</strong> 工具栏按钮。</li>
+<li>第一次保存时，如果弹出 <strong>Save Constraints</strong> 窗口，在工程默认约束目录下填写文件名 <strong><code>led.xdc</code></strong>，确认保存并加入当前约束集 <code>constrs_1</code>。</li>
+<li>在 <strong>Sources → Constraints → constrs_1</strong> 中检查生成的 <code>led.xdc</code>。若工程已有该文件，保存到它即可；如需选择目标，可右键该文件设为 <strong>Set as Target Constraint File</strong>。</li>
+<li>可以双击文件查看工具生成的文本，用于核对保存结果；本流程中的设置在交互窗口完成，无需粘贴约束代码。</li>
+<li>若文件里暂时只有管脚和电平信息，这是本阶段的正常结果。第 9 节会继续通过窗口设置并保存 20 ns 时钟约束。</li>
+</ol>
+<p><strong>结果</strong>：Constraints 下出现 <code>led.xdc</code>，保存了 6 个端口位的管脚与电平</p>
+<h2 id="8-第六步：打开-RTL-分析，检查电路结构">8. 第六步：打开 RTL 分析，检查电路结构</h2>
+<ol>
+<li>打开 Elaborated Design。</li>
+<li>若提示语法或连接错误，返回源文件修复；查看结构时可把 Layout 切换回 <strong>Default Layout</strong>。</li>
+<li>打开 <strong>Schematic</strong>，查看顶层端口、计数器、比较逻辑与 LED 寄存器。</li>
+<li>确认设计顶层是 <code>led</code>，没有把 <code>vtf_led_test</code> 当成硬件顶层。</li>
+</ol>
+<h2 id="9-第七步：运行综合，并通过窗口设置时钟约束">9. 第七步：运行综合，并通过窗口设置时钟约束</h2>
+<h3 id="9-1-首次综合，打开综合后设计">9.1 首次综合，打开综合后设计</h3>
+<ol>
+<li>保存源文件与 XDC，点击 <strong>Synthesis → Run Synthesis</strong>。</li>
+<li>在 <strong>Launch Runs</strong> 中使用本机可承受的并行任务数，点击 <strong>OK</strong>。</li>
+<li>等待完成；若失败，查看 <strong>Messages</strong> 或 <strong>Design Runs → synth_1</strong> 的日志，先处理第一条实际错误。</li>
+<li>成功后选择 <strong>Open Synthesized Design</strong>。</li>
+<li>打开 <strong>Reports → Report Utilization</strong>，查看 LUT、FF 等资源使用。</li>
+<li>在 <strong>Window → I/O Ports</strong> 或对应 I/O 视图中，核对 U18、N15、M14、M15、K16、J16 及 LVCMOS33。</li>
+</ol>
+<p><code>synth_1</code> 显示完成，可打开综合网表和利用率报告。</p>
+<h3 id="9-2-在-Create-Clock-对话框中设置-50-MHz-时钟">9.2 在 Create Clock 对话框中设置 50 MHz 时钟</h3>
+<ol>
+<li>保持 <strong>Open Synthesized Design</strong> 已打开，点击 <strong>Window → Timing Constraints</strong>；也可从 Flow Navigator 的综合后设计节点选择 <strong>Edit Timing Constraints</strong>。</li>
+<li>在 Timing Constraints 窗口左侧展开 <strong>Clocks</strong>，双击 <strong>Create Clock</strong>，或选中该项后点击 <code>+</code>，打开创建主时钟的对话框。</li>
+<li>按下表填写。源对象用旁边的 <code>…</code> / 浏览按钮选择，在端口列表中找到输入端口 <code>sys_clk</code>，加入选中项后确认。</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>窗口字段</th>
+<th>本实验填写值</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clock name</td>
+<td><code>sys_clk</code></td>
+<td>时钟约束的名称</td>
+</tr>
+<tr>
+<td>Source objects / 源对象</td>
+<td>顶层输入端口 <code>sys_clk</code></td>
+<td>时钟实际进入 FPGA 的端口</td>
+</tr>
+<tr>
+<td>Period (ns)</td>
+<td><code>20.000</code></td>
+<td>50 MHz 对应的周期</td>
+</tr>
+<tr>
+<td>Rise at (ns) / 上升沿</td>
+<td><code>0.000</code></td>
+<td>每周期的上升沿位置</td>
+</tr>
+<tr>
+<td>Fall at (ns) / 下降沿</td>
+<td><code>10.000</code></td>
+<td>每周期的下降沿位置，形成 50% 占空比</td>
+</tr>
+</tbody>
+</table>
+<ol start="4">
+<li>确认源对象确实是 <code>sys_clk</code> 端口，再点击 <strong>OK</strong>；若编辑表格后显示 <strong>Apply</strong>，点击应用。此处定义输入主时钟，不选择生成时钟，也不创建没有源端口的虚拟时钟。</li>
+<li>在 Create Clock 表格中确认出现名称 <code>sys_clk</code>、周期 20 ns、源对象为该输入端口的一行。如果打开的是已有工程，并且这条约束已经存在，直接核对，避免重复添加。</li>
+<li>点击 <strong>File → Constraints → Save</strong>，将新时钟设置保存到第 7 节生成的 <code>led.xdc</code>。若提示选择目标文件，选择当前约束集中的该文件。</li>
+</ol>
+<h3 id="9-3-让综合使用已保存的完整约束">9.3 让综合使用已保存的完整约束</h3>
+<ol>
+<li>保存约束后关闭综合后设计视图，重新点击 <strong>Run Synthesis</strong>，让本次综合读取完整 XDC。若提示原结果过期或需要重置运行，确认重新运行。</li>
+<li>综合完成后再次 <strong>Open Synthesized Design</strong>，打开 Timing Constraints，确认 <code>sys_clk</code> 的周期仍为 20 ns。</li>
+<li>再检查一次 I/O Ports 中的 6 个管脚和电平，以及资源利用率报告，然后继续实现。</li>
+</ol>
+<p><strong>结果</strong>：重新打开设计后，管脚、电平和时钟设置均保留，综合成功。</p>
+<h2 id="10-第八步：运行实现-Implementation-并检查时序">10. 第八步：运行实现 Implementation 并检查时序</h2>
+<ol>
+<li>点击 <strong>Implementation → Run Implementation</strong>。</li>
+<li>若提示执行前置步骤，确认执行；等待实现完成。</li>
+<li>选择 <strong>Open Implemented Design</strong>。</li>
+<li>打开 <strong>Reports → Timing → Report Timing Summary</strong>，生成时序报告。</li>
+<li>核对 <code>sys_clk</code> 周期为 20 ns，查看内部受约束路径的 Setup（建立时间）与 Hold（保持时间）结果。</li>
+<li>查看 <strong>Report DRC</strong> 与 Messages，定位 Error 和 Critical Warning。</li>
+<li>单独记录异步复位、LED 输出等相关提示。不要用“实现完成”代替对未约束路径和复位释放问题的分析。</li>
+</ol>
+<p><strong>目的</strong>：把网表放到具体芯片资源位置并完成布线，再根据实际延迟检查电路能否按 50 MHz 工作。</p>
+<p><strong>结果</strong>：<code>impl_1</code> 完成；内部受约束路径满足时序要求，没有阻止比特流生成的 DRC 错误。常用指标中，WNS ≥ 0、TNS = 0 对应所报告的建立时间检查通过；同时检查 WHS ≥ 0、THS = 0 等保持时间结果。</p>
+<h2 id="11-第九步：生成比特流-led-bit">11. 第九步：生成比特流 led.bit</h2>
+<ol>
+<li>点击 <strong>Program and Debug → Generate Bitstream</strong>。</li>
+<li>若提示运行尚未完成的前置步骤，确认执行。</li>
+<li>等待生成完成；成功后可选择 <strong>Open Hardware Manager</strong>。</li>
+<li>在工程目录中确认本次 <code>.bit</code> 已生成：</li>
+</ol>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs text">led/<br>├── led.xpr<br>├── led.srcs/       ← 设计、仿真和约束文件<br>└── led.runs/<br>    └── impl_1/<br>        └── led.bit       ← 下载到 FPGA 的比特流<br></code></pre></td></tr></table></figure>
+<h2 id="12-第十步：连接开发板并设置-JTAG-模式">12. 第十步：连接开发板并设置 JTAG 模式</h2>
+<h2 id="13-第十一步：在-Hardware-Manager-下载">13. 第十一步：在 Hardware Manager 下载</h2>
+<ol>
+<li>在 Vivado 点击 <strong>Open Hardware Manager</strong>。</li>
+<li>点击 <strong>Open target → Auto Connect</strong>。</li>
+<li>等待扫描，在 Hardware 窗口中确认出现 Zynq/FPGA 器件</li>
+<li>右键 FPGA 器件，选择 <strong>Program Device</strong>。</li>
+<li>在 <strong>Bitstream file</strong> 中选择当前工程本次生成的 <code>led.runs/impl_1/led.bit</code>。</li>
+<li>点击 <strong>Program</strong>，等待配置完成，确认没有下载错误。</li>
+<li>按住一次 <strong>PL KEY1</strong> 再松开，让设计从明确的计数初始状态开始。</li>
+</ol>
+<p><strong>结果</strong>：配置成功；按住 KEY1 时 4 灯全亮，松开后约 1 秒全灭，再约 1 秒全亮，持续交替。</p>
+<h2 id="14-对照已有工程，使用-ILA-观察内部信号">14. 对照已有工程，使用 ILA 观察内部信号</h2>
+<p>基础实验完成。以下使用ILA（Integrated Logic Analyzer，片内逻辑分析仪），可以在 FPGA 实际运行时抓取 <code>timer_cnt</code> 和 LED 输出。ILA 抓到的是板上的真实信号。</p>
+<h3 id="14-1-从新建工程添加调试观测的入口">14.1 从新建工程添加调试观测的入口</h3>
+<p>如只需完成同步闪烁，可以跳过。若要给从零创建的工程增加 ILA，可在<strong>综合后、实现前</strong>操作，不改本文 Verilog 逻辑：</p>
+<ol>
+<li>打开 <strong>Open Synthesized Design</strong>。</li>
+<li>在 <strong>Netlist</strong> 中找到需要观察的 LED 和计数器网络，右键 <strong>Mark Debug</strong>。优化可能改变网络名称或合并等价位，以实际保留的网表为准，不要照抄失效网络名。</li>
+<li>点击 <strong>Set Up Debug</strong>，按向导添加这些网络，确认采样时钟来自 50 MHz 的 <code>sys_clk</code>。</li>
+<li>把采样深度设为 1024，核对汇总后完成向导。</li>
+<li>使用 <strong>File → Constraints → Save</strong> 保存生成的调试约束，再运行实现和比特流生成。</li>
+<li>检查生成的 <code>.bit</code> 和 <code>.ltx</code>，后续下载使用同一次构建的文件。</li>
+</ol>
+<p>Debug 窗口出现 ILA 核，重新生成后得到可配对使用的比特流与探针信息。实际资源使用会高于没有 ILA 的基础实验。</p>
+<h3 id="14-2-下载并触发一次计数清零">14.2 下载并触发一次计数清零</h3>
+<ol>
+<li>下载后刷新设备，打开识别到的 ILA 仪表面板。若未出现，检查配对文件、50 MHz 时钟是否运行及调试连接提示。</li>
+<li>在 Waveform 中把 LED 设为二进制、计数器设为无符号十进制。</li>
+<li>在 <strong>Trigger Setup</strong> 点击 <code>+</code> 添加计数器探针，比较条件设为 <code>==</code>，Radix 选无符号十进制，Value 填 <code>49999990</code>。</li>
+<li>保持基本触发，采样深度设为 1024，触发位置可放在窗口中间，并保持每周期连续采样。</li>
+<li>点击 <strong>Run Trigger</strong>，松开 PL KEY1，等待计数达到条件并上传波形；若一直按住 KEY1，计数为 0，不会触发。</li>
+<li>放大触发点后约 10 个时钟周期的位置，检查计数达到终值、随后清零及 LED 同时取反的关系。</li>
+</ol>
+<p>在终值附近看到 <code>timer_cnt</code> 清零、<code>led_OBUF</code> 在 <code>0000</code> 与 <code>1111</code> 之间切换。</p>
+<h2 id="实验附件">实验附件</h2>
+<ul>
+<li><a href="/downloads/fpga/ax7020-led/ax7020-led-files.zip">下载完整附件 ZIP</a>（源码、仿真、约束、图片及现有 ILA 下载文件）</li>
+<li><a href="/downloads/fpga/ax7020-led/led.md">下载 Markdown 笔记</a></li>
+<li><a href="/downloads/fpga/ax7020-led/rtl/led.v">LED 设计源码</a>、<a href="/downloads/fpga/ax7020-led/sim/vtf_led_test.v">仿真源码</a>、<a href="/downloads/fpga/ax7020-led/constraints/led.xdc">基础 XDC</a></li>
+<li><a href="/fpga/ax7020-hdmi-pong/">继续学习：HDMI 挡板接球游戏</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/FPGA/" class="category-chain-item">FPGA</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/FPGA/AX7020/" class="category-chain-item">AX7020</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/FPGA/" class="print-no-link">#FPGA</a>
+      
+        <a href="/tags/AX7020/" class="print-no-link">#AX7020</a>
+      
+        <a href="/tags/Verilog/" class="print-no-link">#Verilog</a>
+      
+        <a href="/tags/Vivado/" class="print-no-link">#Vivado</a>
+      
+        <a href="/tags/LED/" class="print-no-link">#LED</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>AX7020 FPGA 零基础实验：LED 同步闪烁</div>
+      <div>https://sebma369.github.io/fpga/ax7020-led/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>Seb Ma</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>October 21, 2026</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/fpga/ax7020-hdmi-pong/" title="AX7020 纯 FPGA 实验：HDMI 挡板接球游戏">
+                        <span class="hidden-mobile">AX7020 纯 FPGA 实验：HDMI 挡板接球游戏</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
